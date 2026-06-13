@@ -1640,7 +1640,7 @@ function ModelsSection() {
 function PartnersSection() {
   const [users, setUsers] = useState(getUsers());
   const [orders] = useOrdersLive();
-  const [filter, setFilter] = useState<"all" | "oldest" | "newest" | "top">("all");
+  const [filter, setFilter] = useState<"all" | "oldest" | "newest" | "top" | "blocked">("all");
   const [expanded, setExpanded] = useState<string | null>(null);
 
   useEffect(() => {
