@@ -1660,7 +1660,8 @@ function PartnersSection() {
   }, [users, orders]);
 
   const sorted = useMemo(() => {
-    const arr = [...enriched];
+    let arr = [...enriched];
+    if (filter === "blocked") arr = arr.filter((x) => x.u.blocked);
     if (filter === "oldest") arr.sort((a, b) => +new Date(a.u.joinedAt) - +new Date(b.u.joinedAt));
     else if (filter === "newest") arr.sort((a, b) => +new Date(b.u.joinedAt) - +new Date(a.u.joinedAt));
     else if (filter === "top") arr.sort((a, b) => b.totalSpent - a.totalSpent);
