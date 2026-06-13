@@ -32,12 +32,14 @@ import {
 import {
   getOrders,
   getPendingInvoices,
+  removePendingInvoice,
   saveOrders,
   STATUS_LABEL,
   STATUS_COLOR,
   persianDateTime,
   type Order,
   type OrderStatus,
+  type PendingInvoice,
 } from "@/lib/orders";
 import {
   notifyOrder,
