@@ -597,9 +597,19 @@ function DashboardSection() {
 
 function OrdersTrackingSection() {
   const [orders, setOrders] = useOrdersLive();
-  const [tab, setTab] = useState<"pending" | "approved" | "rejected">("pending");
+  const [pendings, setPendings] = useState<PendingInvoice[]>([]);
+  const [tab, setTab] = useState<"pending" | "approved" | "rejected" | "awaiting">("pending");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [approvedFilter, setApprovedFilter] = useState<OrderStatus>("approved");
+  const [postalEditId, setPostalEditId] = useState<string | null>(null);
+  const [postal, setPostal] = useState("");
+
+  useEffect(() => {
+    const r = () => setPendings(getPendingInvoices());
+    r();
+    window.addEventListener("orders-updated", r);
+    return () => window.removeEventListener("orders-updated", r);
+  }, []);
 
   const pending = orders.filter((o) => o.status === "pending" && !o.rejected);
   const approved = orders.filter((o) => o.status !== "pending" && !o.rejected);
@@ -629,22 +639,36 @@ function OrdersTrackingSection() {
   function del(id: string) {
     update(orders.filter((o) => o.id !== id));
   }
+  function patch(o: Order, p: Partial<Order>) {
+    update(orders.map((x) => (x.id === o.id ? { ...x, ...p } : x)));
+  }
+  function progress(o: Order) {
+    if (o.status === "approved") {
+      setPostalEditId(o.id);
+      setPostal(o.postalCode || "");
+    } else if (o.status === "shipping") {
+      patch(o, { status: "delivered" });
+      notifyOrder({ ...o, status: "delivered" }, "delivered");
+      toast.success("تحویل داده شد");
+    }
+  }
 
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-extrabold">پیگیری سفارشات</h2>
-      <div className="grid grid-cols-3 gap-2 rounded-xl border border-white/10 bg-white/5 p-1">
+      <div className="grid grid-cols-4 gap-1 rounded-xl border border-white/10 bg-white/5 p-1">
         {(
           [
             ["pending", "در انتظار تایید"],
             ["approved", "تایید شده"],
             ["rejected", "رد شده"],
+            ["awaiting", "در انتظار پرداخت"],
           ] as const
         ).map(([id, label]) => (
           <button
             key={id}
             onClick={() => setTab(id as any)}
-            className={`rounded-lg py-2 text-[11px] font-extrabold ${
+            className={`rounded-lg py-2 text-[10px] font-extrabold ${
               tab === id ? "bg-sky-500/20 text-sky-300" : "text-muted-foreground hover:bg-white/5"
             }`}
           >
@@ -698,7 +722,7 @@ function OrdersTrackingSection() {
 
       {tab === "approved" && (
         <div className="flex gap-3">
-          <aside className="w-36 shrink-0 space-y-2">
+          <aside className="w-32 shrink-0 space-y-2">
             {(
               [
                 ["approved", "در حال انجام", "bg-sky-500/20 text-sky-300"],
@@ -734,7 +758,47 @@ function OrdersTrackingSection() {
                   </span>
                 </button>
                 {expanded === o.id && (
-                  <div className="border-t border-white/10 p-3">
+                  <div className="space-y-3 border-t border-white/10 p-3">
+                    {o.postalCode && (
+                      <div className="rounded-lg bg-emerald-500/10 px-3 py-2 text-[11px] text-emerald-300">
+                        کد پستی: <span dir="ltr" className="font-mono">{o.postalCode}</span>
+                      </div>
+                    )}
+                    {postalEditId === o.id ? (
+                      <div className="flex gap-2">
+                        <input
+                          value={postal}
+                          onChange={(e) => setPostal(e.target.value)}
+                          placeholder="کد پستی"
+                          dir="ltr"
+                          className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs focus:outline-none"
+                        />
+                        <button
+                          onClick={() => {
+                            if (!postal.trim()) {
+                              toast.error("کد پستی را وارد کنید");
+                              return;
+                            }
+                            patch(o, { status: "shipping", postalCode: postal.trim() });
+                            notifyOrder({ ...o, status: "shipping", postalCode: postal.trim() }, "shipping");
+                            setPostalEditId(null);
+                            toast.success("ذخیره شد");
+                          }}
+                          className="rounded-lg bg-orange-500/20 px-3 py-2 text-[11px] font-bold text-orange-300"
+                        >
+                          ذخیره و ارسال
+                        </button>
+                      </div>
+                    ) : (
+                      o.status !== "delivered" && (
+                        <button
+                          onClick={() => progress(o)}
+                          className="w-full rounded-lg btn-primary-gradient py-2 text-[11px] font-extrabold"
+                        >
+                          {o.status === "approved" ? "→ در حال ارسال" : "→ تحویل داده شده"}
+                        </button>
+                      )
+                    )}
                     <InvoiceBreakdown order={o} />
                   </div>
                 )}
@@ -762,6 +826,56 @@ function OrdersTrackingSection() {
                 <span className="tabular-nums">{o.totalUnits} عدد</span>
                 <span className="font-extrabold text-sky-300">{o.invoice}</span>
               </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {tab === "awaiting" && (
+        <ul className="space-y-2">
+          <li className="grid grid-cols-4 gap-2 px-3 py-2 text-[10px] text-muted-foreground border-b border-white/10">
+            <span>شماره فاکتور</span>
+            <span>مبلغ</span>
+            <span>تعداد گلس</span>
+            <span>تاریخ</span>
+          </li>
+          {pendings.length === 0 && (
+            <li className="py-8 text-center text-xs text-muted-foreground">موردی نیست</li>
+          )}
+          {pendings.map((p) => (
+            <li key={p.id} className="rounded-2xl glass-strong">
+              <button
+                onClick={() => setExpanded(expanded === p.id ? null : p.id)}
+                className="grid w-full grid-cols-4 items-center gap-2 px-3 py-3 text-right text-[11px]"
+              >
+                <span className="font-extrabold tabular-nums text-sky-300">{p.invoice}</span>
+                <span className="tabular-nums">{fmt(p.totalPrice)} ت</span>
+                <span className="tabular-nums">{p.totalUnits} عدد</span>
+                <span className="text-muted-foreground">{persianDateTime(p.date)}</span>
+              </button>
+              {expanded === p.id && (
+                <div className="space-y-3 border-t border-white/10 p-3">
+                  {(p.userName || p.userPhone) && (
+                    <div className="flex justify-between text-[11px] text-muted-foreground">
+                      <span dir="ltr">{p.userPhone}</span>
+                      <span>{p.userName}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() => {
+                        removePendingInvoice(p.invoice);
+                        setPendings(getPendingInvoices());
+                        toast.success("حذف شد");
+                      }}
+                      className="flex items-center gap-1 rounded-lg bg-red-500/20 px-3 py-1.5 text-[11px] font-bold text-red-300 hover:bg-red-500/30"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" /> حذف
+                    </button>
+                  </div>
+                  <InvoiceBreakdown order={{ items: p.items } as Order} />
+                </div>
+              )}
             </li>
           ))}
         </ul>
