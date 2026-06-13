@@ -908,10 +908,10 @@ function InvoiceBreakdown({ order }: { order: Order }) {
           </div>
           <div className="divide-y divide-white/5">
             {g.items.map((it) => (
-              <div key={it.modelName} className="flex items-center justify-between gap-2 py-1.5 text-[11px]">
-                <span className="tabular-nums text-price">{fmt(it.qty * it.unitPrice)}</span>
+              <div key={it.modelName} dir="ltr" className="flex items-center justify-between gap-2 py-1.5 text-[11px]">
+                <span className="flex-1 truncate text-left">{it.modelName}</span>
                 <span className="tabular-nums text-muted-foreground">×{it.qty}</span>
-                <span className="flex-1 truncate text-left" dir="ltr">{it.modelName}</span>
+                <span className="tabular-nums text-price">{fmt(it.qty * it.unitPrice)}</span>
               </div>
             ))}
           </div>
