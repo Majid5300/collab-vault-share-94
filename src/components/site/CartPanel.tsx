@@ -131,10 +131,11 @@ export function CartPanel() {
                         return (
                           <div
                             key={it.modelName}
+                            dir="ltr"
                             className="flex items-center gap-2 py-2"
                           >
                             <p
-                              className="min-w-0 flex-1 truncate text-right text-xs font-bold"
+                              className="min-w-0 flex-1 truncate text-left text-xs font-bold"
                               title={it.modelName}
                             >
                               {truncate(it.modelName, 20)}
@@ -142,22 +143,22 @@ export function CartPanel() {
 
                             <div className="flex items-center gap-0.5 rounded-lg border border-white/10 bg-white/5 p-0.5">
                               <button
-                                aria-label="افزایش"
-                                onClick={() => updateQty(it.productId, it.modelName, it.qty + 5)}
-                                className="flex h-6 w-6 items-center justify-center rounded-md hover:bg-white/10"
-                              >
-                                <Plus className="h-3 w-3" />
-                              </button>
-                              <span className="w-6 text-center text-xs font-bold tabular-nums">
-                                {it.qty}
-                              </span>
-                              <button
                                 aria-label="کاهش"
                                 onClick={() => updateQty(it.productId, it.modelName, it.qty - 5)}
                                 disabled={it.qty <= 5}
                                 className="flex h-6 w-6 items-center justify-center rounded-md hover:bg-white/10 disabled:opacity-30"
                               >
                                 <Minus className="h-3 w-3" />
+                              </button>
+                              <span className="w-6 text-center text-xs font-bold tabular-nums">
+                                {it.qty}
+                              </span>
+                              <button
+                                aria-label="افزایش"
+                                onClick={() => updateQty(it.productId, it.modelName, it.qty + 5)}
+                                className="flex h-6 w-6 items-center justify-center rounded-md hover:bg-white/10"
+                              >
+                                <Plus className="h-3 w-3" />
                               </button>
                             </div>
 
