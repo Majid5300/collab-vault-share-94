@@ -648,7 +648,6 @@ function OrdersTrackingSection() {
       setPostal(o.postalCode || "");
     } else if (o.status === "shipping") {
       patch(o, { status: "delivered" });
-      notifyOrder({ ...o, status: "delivered" }, "delivered");
       toast.success("تحویل داده شد");
     }
   }
