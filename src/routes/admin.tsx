@@ -1687,6 +1687,7 @@ function PartnersSection() {
               ["oldest", "قدیمی‌ترین"],
               ["newest", "جدیدترین"],
               ["top", "بیشترین خرید"],
+              ["blocked", "بلاک شده‌ها"],
             ] as const
           ).map(([id, l]) => (
             <button
