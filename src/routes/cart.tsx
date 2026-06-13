@@ -515,10 +515,9 @@ function CartPage() {
                     {/* Models (read-only) */}
                     <div className="divide-y divide-white/5 px-2.5">
                       {g.items.map((it) => (
-                        <div key={it.modelName} className="flex items-center gap-2 py-2">
+                        <div key={it.modelName} dir="ltr" className="flex items-center gap-2 py-2">
                           <p
-                            className="min-w-0 flex-1 truncate text-xs font-bold text-right"
-                            dir="ltr"
+                            className="min-w-0 flex-1 truncate text-xs font-bold text-left"
                             title={it.modelName}
                           >
                             {it.modelName}

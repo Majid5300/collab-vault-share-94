@@ -265,6 +265,22 @@ function InvoiceModal({
           <span style={{ color: "#0ea5e9" }} className="font-extrabold">{inv.invoice}</span>
           <span>{persianDateTime(inv.date)}</span>
         </div>
+        {"postalCode" in inv && (inv as Order).postalCode && (
+          <div className="mb-2 flex items-center justify-between gap-2 rounded-lg bg-emerald-500/10 px-3 py-2 text-[11px] text-emerald-300">
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText((inv as Order).postalCode!);
+                toast.success("کپی شد");
+              }}
+              className="flex items-center gap-1 rounded bg-white/10 px-2 py-0.5 text-[10px] hover:bg-white/20"
+            >
+              کپی
+            </button>
+            <span>
+              کد پستی: <span dir="ltr" className="font-mono">{(inv as Order).postalCode}</span>
+            </span>
+          </div>
+        )}
         <div className="h-px bg-white/10" />
 
         <div className="space-y-4 py-3">
@@ -276,8 +292,8 @@ function InvoiceModal({
               </div>
               <div className="divide-y divide-white/5">
                 {g.items.map((it) => (
-                  <div key={it.modelName} className="flex items-center justify-between gap-2 py-1.5">
-                    <p className="flex-1 truncate text-xs" dir="ltr">{it.modelName}</p>
+                  <div key={it.modelName} dir="ltr" className="flex items-center justify-between gap-2 py-1.5">
+                    <p className="flex-1 truncate text-xs text-left">{it.modelName}</p>
                     <span className="text-[11px] tabular-nums text-muted-foreground">×{it.qty}</span>
                     <span className="text-[11px] font-bold text-price tabular-nums">
                       {(it.qty * it.unitPrice).toLocaleString("en-US")}
