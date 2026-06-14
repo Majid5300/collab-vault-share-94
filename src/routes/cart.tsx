@@ -96,13 +96,13 @@ function CartPage() {
   }, [items]);
 
   function checkCode() {
-    const c = code.trim().toUpperCase();
+    const c = code.trim();
     if (!c) return;
-    const found = DISCOUNT_CODES[c];
-    if (!found || found.remaining <= 0) {
+    const found = resolveDiscount(c, totalPrice);
+    if (!found) {
       setDiscount(null);
       setDiscountApplied(false);
-      setCodeError("کد تخفیف نامعتبر است");
+      setCodeError("کد تخفیف نامعتبر یا منقضی است");
       return;
     }
     setCodeError("");
