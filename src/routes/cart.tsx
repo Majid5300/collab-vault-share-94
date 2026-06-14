@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, X, MapPin, Truck, Package, Send } from "lucide-react";
 import { useCart, type CartItem, openCartPanel } from "@/hooks/use-cart";
 import { getOrCreateActiveInvoice, upsertPendingInvoice } from "@/lib/orders";
+import { resolveDiscount, type DiscountCode } from "@/lib/admin-store";
 
 export const Route = createFileRoute("/cart")({
   component: CartPage,
@@ -33,10 +34,6 @@ function persianDateTime(): string {
   return `${date} - ${time}`;
 }
 
-const DISCOUNT_CODES: Record<string, { amount: number; remaining: number }> = {
-  PARS10: { amount: 50000, remaining: 3 },
-  GLASS20: { amount: 120000, remaining: 1 },
-};
 
 function CartPage() {
   const navigate = useNavigate();
@@ -50,7 +47,7 @@ function CartPage() {
   const [modelsOpen, setModelsOpen] = useState(false);
 
   const [code, setCode] = useState("");
-  const [discount, setDiscount] = useState<{ amount: number; remaining: number } | null>(null);
+  const [discount, setDiscount] = useState<{ code: DiscountCode; amount: number } | null>(null);
   const [discountApplied, setDiscountApplied] = useState(false);
   const [codeError, setCodeError] = useState("");
   const finalTotal = Math.max(0, totalPrice - (discountApplied && discount ? discount.amount : 0));
@@ -99,13 +96,13 @@ function CartPage() {
   }, [items]);
 
   function checkCode() {
-    const c = code.trim().toUpperCase();
+    const c = code.trim();
     if (!c) return;
-    const found = DISCOUNT_CODES[c];
-    if (!found || found.remaining <= 0) {
+    const found = resolveDiscount(c, totalPrice);
+    if (!found) {
       setDiscount(null);
       setDiscountApplied(false);
-      setCodeError("کد تخفیف نامعتبر است");
+      setCodeError("کد تخفیف نامعتبر یا منقضی است");
       return;
     }
     setCodeError("");
@@ -328,7 +325,10 @@ function CartPage() {
                   تومان
                 </p>
                 <p className="mt-1 text-[11px] text-muted-foreground">
-                  استفاده باقیمانده: <span className="tabular-nums">{discount.remaining}</span>
+                  استفاده باقیمانده:{" "}
+                  <span className="tabular-nums">
+                    {Math.max(0, (discount.code.limit || 0) - (discount.code.used || 0))}
+                  </span>
                 </p>
               </div>
             </div>

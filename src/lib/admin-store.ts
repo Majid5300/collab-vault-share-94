@@ -35,6 +35,8 @@ export type AdminProduct = {
 };
 
 
+export type DiscountTier = { minAmount: number; percent: number };
+
 export type DiscountCode = {
   id: string;
   code: string;
@@ -47,7 +49,43 @@ export type DiscountCode = {
   targetGroup?: "all" | "active" | "new";
   /** روشن / خاموش */
   active?: boolean;
+  /** سطح‌های «درصد بر اساس مبلغ» */
+  tiers?: DiscountTier[];
 };
+
+/**
+ * Resolve a typed discount code by user-input string (case-insensitive),
+ * compute its monetary value against a cart total, and return null when
+ * invalid / expired / exhausted / inactive.
+ */
+export function resolveDiscount(
+  rawCode: string,
+  cartTotal: number,
+): { code: DiscountCode; amount: number } | null {
+  const c = (rawCode || "").trim().toUpperCase();
+  if (!c) return null;
+  const found = getDiscounts().find((d) => d.code.trim().toUpperCase() === c);
+  if (!found) return null;
+  if (found.active === false) return null;
+  if (new Date(found.expiry) < new Date()) return null;
+  if (found.limit > 0 && found.used >= found.limit) return null;
+
+  let amount = 0;
+  if (found.kind === "fixed") {
+    amount = Math.max(0, found.amount);
+  } else if (found.kind === "percent") {
+    amount = Math.floor((cartTotal * Math.max(0, found.amount)) / 100);
+  } else if (found.kind === "percent_by_amount") {
+    const tiers = (found.tiers || [])
+      .filter((t) => t.minAmount > 0 && t.percent > 0)
+      .sort((a, b) => a.minAmount - b.minAmount);
+    let pct = 0;
+    for (const t of tiers) if (cartTotal >= t.minAmount) pct = t.percent;
+    amount = Math.floor((cartTotal * pct) / 100);
+  }
+  if (amount <= 0) return null;
+  return { code: found, amount };
+}
 
 export type DiscountRedemption = {
   id: string;

@@ -2,8 +2,9 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, Minus, Plus, ShoppingCart } from "lucide-react";
 import { z } from "zod";
-import { GLASS_TYPES, getGlassType, type GlassType } from "@/data/glass-types";
+import { type GlassType } from "@/data/glass-types";
 import { applyProductOrder, getSettings } from "@/lib/admin-store";
+import { useMergedGlassTypes, getMergedGlassType } from "@/lib/products-merged";
 import { openCartPanel, useCart } from "@/hooks/use-cart";
 import { AddToCartButton } from "@/components/site/AddToCartButton";
 import { SimilarStockDialog } from "@/components/site/SimilarStockDialog";
@@ -23,11 +24,13 @@ function truncate(s: string, n = 22) {
   return s.length > n ? s.slice(0, n - 1) + "…" : s;
 }
 
-// Category list: first is "all", then each glass type as a category
-const CATEGORIES = [
-  { id: "all", label: "همه محصولات" },
-  ...GLASS_TYPES.map((t) => ({ id: t.id, label: `گلس ${t.label}` })),
-];
+// Category list built from merged glass types (admin can rename labels)
+function buildCategories(merged: GlassType[]) {
+  return [
+    { id: "all", label: "همه محصولات" },
+    ...merged.map((t) => ({ id: t.id, label: `گلس ${t.label}` })),
+  ];
+}
 
 function ProductCard({
   t,
@@ -140,10 +143,12 @@ function ProductsPage() {
   const { type, cat } = Route.useSearch();
   const navigate = useNavigate();
   const { distinctCount } = useCart();
+  const merged = useMergedGlassTypes();
+  const CATEGORIES = useMemo(() => buildCategories(merged), [merged]);
 
   const activeCat = cat && CATEGORIES.some((c) => c.id === cat) ? cat : "all";
-  const activeId = useMemo(() => getGlassType(type).id, [type]);
-  const active = useMemo(() => getGlassType(activeId), [activeId]);
+  const activeId = useMemo(() => getMergedGlassType(type ?? "").id, [type, merged]);
+  const active = useMemo(() => getMergedGlassType(activeId), [activeId, merged]);
 
   const [brand, setBrand] = useState<"apple" | "android" | null>(null);
   const [qtyMap, setQtyMap] = useState<Record<string, number>>({});
@@ -160,9 +165,8 @@ function ProductsPage() {
   }, []);
 
   const setCat = (id: string) => {
-    // when switching category, set type to first product of that category (or first overall for "all")
     const first =
-      id === "all" ? GLASS_TYPES[0] : GLASS_TYPES.find((g) => g.id === id) ?? GLASS_TYPES[0];
+      id === "all" ? merged[0] : merged.find((g) => g.id === id) ?? merged[0];
     navigate({ to: "/products", search: { cat: id, type: first.id } });
   };
 
@@ -171,13 +175,15 @@ function ProductsPage() {
   };
 
   const productList = useMemo(() => {
-    const base = activeCat === "all" ? GLASS_TYPES : GLASS_TYPES.filter((g) => g.id === activeCat);
+    const base = activeCat === "all" ? merged : merged.filter((g) => g.id === activeCat);
     const s = getSettings();
     const hidden = new Set(s.productHidden || []);
     const visible = base.filter((t) => !hidden.has(t.id));
     const orderedIds = applyProductOrder(visible.map((t) => t.id), s.productOrder);
     return orderedIds.map((id) => visible.find((t) => t.id === id)!).filter(Boolean);
-  }, [activeCat]);
+  }, [activeCat, merged]);
+
+
 
 
   const visibleModels = useMemo(() => {

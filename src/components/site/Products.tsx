@@ -1,11 +1,12 @@
 import { ShoppingCart } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
-import { GLASS_TYPES } from "@/data/glass-types";
 import { applyProductOrder, getSettings, type SiteSettings } from "@/lib/admin-store";
+import { useMergedGlassTypes } from "@/lib/products-merged";
 
 export function Products() {
   const [settings, setSettings] = useState<SiteSettings>(() => getSettings());
+  const merged = useMergedGlassTypes();
 
   useEffect(() => {
     const r = () => setSettings(getSettings());
@@ -15,7 +16,7 @@ export function Products() {
 
   const showcase = useMemo(() => {
     const hidden = new Set(settings.productHidden || []);
-    const visible = GLASS_TYPES.filter((t) => !hidden.has(t.id));
+    const visible = merged.filter((t) => !hidden.has(t.id));
     const orderedIds = applyProductOrder(
       visible.map((t) => t.id),
       settings.productOrder,
@@ -24,7 +25,7 @@ export function Products() {
       .map((id) => visible.find((t) => t.id === id)!)
       .filter(Boolean)
       .slice(0, 5);
-  }, [settings]);
+  }, [settings, merged]);
 
   return (
     <section id="products" className="mx-auto mt-14 max-w-7xl px-4">
