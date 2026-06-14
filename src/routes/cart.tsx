@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, X, MapPin, Truck, Package, Send } from "lucide-react";
 import { useCart, type CartItem, openCartPanel } from "@/hooks/use-cart";
 import { getOrCreateActiveInvoice, upsertPendingInvoice } from "@/lib/orders";
+import { resolveDiscount, type DiscountCode } from "@/lib/admin-store";
 
 export const Route = createFileRoute("/cart")({
   component: CartPage,
