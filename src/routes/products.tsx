@@ -24,11 +24,13 @@ function truncate(s: string, n = 22) {
   return s.length > n ? s.slice(0, n - 1) + "…" : s;
 }
 
-// Category list: first is "all", then each glass type as a category
-const CATEGORIES = [
-  { id: "all", label: "همه محصولات" },
-  ...GLASS_TYPES.map((t) => ({ id: t.id, label: `گلس ${t.label}` })),
-];
+// Category list built from merged glass types (admin can rename labels)
+function buildCategories(merged: GlassType[]) {
+  return [
+    { id: "all", label: "همه محصولات" },
+    ...merged.map((t) => ({ id: t.id, label: `گلس ${t.label}` })),
+  ];
+}
 
 function ProductCard({
   t,
