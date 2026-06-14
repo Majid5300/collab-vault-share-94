@@ -120,8 +120,14 @@ function OrdersPage() {
                 {orders.map((o, i) => (
                   <li key={o.id}>
                     <div className="flex items-center justify-between gap-3 px-2 py-3">
-                      <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-bold ${STATUS_COLOR[o.status]}`}>
-                        {STATUS_LABEL[o.status]}
+                      <span
+                        className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-bold ${
+                          o.rejected
+                            ? "bg-red-500/15 text-red-300 border-red-400/30"
+                            : STATUS_COLOR[o.status]
+                        }`}
+                      >
+                        {o.rejected ? "رد شده" : STATUS_LABEL[o.status]}
                       </span>
                       <button
                         onClick={() => setDetail(o)}
