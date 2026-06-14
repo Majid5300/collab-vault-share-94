@@ -2524,13 +2524,18 @@ function DiscountDefineTab() {
             <option value="percent">درصدی</option>
             <option value="percent_by_amount">درصد بر اساس مبلغ</option>
           </select>
-          <input
-            type="number"
-            placeholder="مبلغ / درصد"
-            value={draft.amount}
-            onChange={(e) => setDraft({ ...draft, amount: Number(e.target.value) })}
-            className="rounded-lg border border-white/10 bg-white/5 px-3 py-2"
-          />
+          {draft.kind !== "percent_by_amount" && (
+            <input
+              type="number"
+              inputMode="numeric"
+              placeholder={draft.kind === "fixed" ? "مبلغ (تومان)" : "درصد"}
+              value={Number.isFinite(draft.amount) && draft.amount !== 0 ? draft.amount : ""}
+              onChange={(e) =>
+                setDraft({ ...draft, amount: e.target.value === "" ? 0 : Number(e.target.value) })
+              }
+              className="rounded-lg border border-white/10 bg-white/5 px-3 py-2"
+            />
+          )}
         </div>
         <div className="grid grid-cols-2 gap-2">
           <input
@@ -2541,12 +2546,75 @@ function DiscountDefineTab() {
           />
           <input
             type="number"
+            inputMode="numeric"
             placeholder="محدودیت استفاده"
-            value={draft.limit}
-            onChange={(e) => setDraft({ ...draft, limit: Number(e.target.value) })}
+            value={Number.isFinite(draft.limit) && draft.limit !== 0 ? draft.limit : ""}
+            onChange={(e) =>
+              setDraft({ ...draft, limit: e.target.value === "" ? 0 : Number(e.target.value) })
+            }
             className="rounded-lg border border-white/10 bg-white/5 px-3 py-2"
           />
         </div>
+
+        {draft.kind === "percent_by_amount" && (
+          <div className="space-y-2 rounded-xl border border-white/10 bg-white/5 p-3">
+            <div className="text-[11px] font-bold text-muted-foreground">
+              سطح‌های تخفیف بر اساس مبلغ خرید
+            </div>
+            {(draft.tiers ?? []).map((t, i) => (
+              <div key={i} className="grid grid-cols-[1fr_1fr_auto] gap-2">
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  placeholder="حداقل مبلغ خرید (تومان)"
+                  value={t.minAmount !== 0 ? t.minAmount : ""}
+                  onChange={(e) => {
+                    const v = e.target.value === "" ? 0 : Number(e.target.value);
+                    const next = [...(draft.tiers ?? [])];
+                    next[i] = { ...next[i], minAmount: v };
+                    setDraft({ ...draft, tiers: next });
+                  }}
+                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-2"
+                />
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  placeholder="درصد تخفیف"
+                  value={t.percent !== 0 ? t.percent : ""}
+                  onChange={(e) => {
+                    const v = e.target.value === "" ? 0 : Number(e.target.value);
+                    const next = [...(draft.tiers ?? [])];
+                    next[i] = { ...next[i], percent: v };
+                    setDraft({ ...draft, tiers: next });
+                  }}
+                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-2"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = (draft.tiers ?? []).filter((_, idx) => idx !== i);
+                    setDraft({ ...draft, tiers: next });
+                  }}
+                  className="rounded-lg bg-red-500/20 px-3 text-red-300 hover:bg-red-500/30"
+                >
+                  حذف
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() =>
+                setDraft({
+                  ...draft,
+                  tiers: [...(draft.tiers ?? []), { minAmount: 0, percent: 0 }],
+                })
+              }
+              className="w-full rounded-lg border border-dashed border-white/20 bg-white/5 py-2 text-[11px] font-bold text-sky-300 hover:bg-white/10"
+            >
+              + افزودن سطح
+            </button>
+          </div>
+        )}
         <select
           value={draft.targetGroup}
           onChange={(e) => setDraft({ ...draft, targetGroup: e.target.value as DiscountCode["targetGroup"] })}
