@@ -47,7 +47,7 @@ function CartPage() {
   const [modelsOpen, setModelsOpen] = useState(false);
 
   const [code, setCode] = useState("");
-  const [discount, setDiscount] = useState<{ amount: number; remaining: number } | null>(null);
+  const [discount, setDiscount] = useState<{ code: DiscountCode; amount: number } | null>(null);
   const [discountApplied, setDiscountApplied] = useState(false);
   const [codeError, setCodeError] = useState("");
   const finalTotal = Math.max(0, totalPrice - (discountApplied && discount ? discount.amount : 0));
