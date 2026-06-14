@@ -325,7 +325,10 @@ function CartPage() {
                   تومان
                 </p>
                 <p className="mt-1 text-[11px] text-muted-foreground">
-                  استفاده باقیمانده: <span className="tabular-nums">{discount.remaining}</span>
+                  استفاده باقیمانده:{" "}
+                  <span className="tabular-nums">
+                    {Math.max(0, (discount.code.limit || 0) - (discount.code.used || 0))}
+                  </span>
                 </p>
               </div>
             </div>
