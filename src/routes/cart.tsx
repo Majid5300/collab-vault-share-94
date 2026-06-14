@@ -34,10 +34,6 @@ function persianDateTime(): string {
   return `${date} - ${time}`;
 }
 
-const DISCOUNT_CODES: Record<string, { amount: number; remaining: number }> = {
-  PARS10: { amount: 50000, remaining: 3 },
-  GLASS20: { amount: 120000, remaining: 1 },
-};
 
 function CartPage() {
   const navigate = useNavigate();
